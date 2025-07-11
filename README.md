@@ -1,3 +1,3 @@
-# dappStarter
+# dapp Learn
 
-this is a dapp project starter
+meant for getting familar with hardhat framework
