@@ -4,7 +4,7 @@ import SimpleStorageArtifact from "../artifacts/contracts/SimpleStorage.sol/Simp
 async function main() {
   // const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
 
-  const contractAddr = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512";
+  const contractAddr = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
   
   const signers = await ethers.getSigners();
   const contract = new ethers.Contract(contractAddr,SimpleStorageArtifact.abi, signers[0]);
