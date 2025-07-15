@@ -1,7 +1,7 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-ignition";
-// import "hardhat-gas-reporter";
+import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-deploy";
 import * as dotenv from "dotenv";
@@ -43,9 +43,10 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
-  // gasReporter: {
-  //   enabled: true,
-  // },
+  gasReporter: {
+    enabled: true,
+    currency: "USD"
+  },
 };
 
 export default config;

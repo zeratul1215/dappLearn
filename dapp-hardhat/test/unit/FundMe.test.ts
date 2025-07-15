@@ -37,13 +37,13 @@ describe("FundMe", () => {
 
     it("updated the amount funded data structure", async () => {
       await fundMe.fund({value: sendValue});
-      const response = await fundMe.addressToAmountFunded(deployer);
+      const response = await fundMe.s_addressToAmountFunded(deployer);
       assert.equal(response.toString(),sendValue.toString());
     });
 
     it("adds a funder to the array of funders", async () => {
       await fundMe.fund({value: sendValue});
-      const response = await fundMe.funders(0);
+      const response = await fundMe.s_funders(0);
       assert.equal(response, deployer);
     });
   });
@@ -82,6 +82,82 @@ describe("FundMe", () => {
 
       assert.equal(endingFundsContract.toString(), "0");
       
+    });
+
+    it("withdraw from multiple funders", async () => {
+      //arrange
+      const accounts = await ethers.getSigners();
+      
+      for(let i = 0 ; i < 3 ; i++){
+        const fundMeConnectedWithAccount = await fundMe.connect(accounts[i]) as Contract;
+        await fundMeConnectedWithAccount.fund({value: sendValue});
+      }
+
+      const startingFunds = await ethers.provider.getBalance(deployer);
+      const startingFundsContract = await ethers.provider.getBalance(fundMe.target);
+
+      //act
+      const transactionResponse = await fundMe.withdraw();
+      const transactionReceipt = await transactionResponse.wait(1);
+      
+      // 计算实际消耗的 gas cost
+      const gasUsed = transactionReceipt.gasUsed;
+      const gasPrice = transactionReceipt.gasPrice;
+      const gasCost = gasUsed * gasPrice;
+
+      const endingFunds = await ethers.provider.getBalance(deployer);
+      const endingFundsContract = await ethers.provider.getBalance(fundMe.target);
+      
+      //assert
+      assert.equal((endingFunds + BigInt(gasCost)).toString(), (startingFunds + startingFundsContract).toString());
+
+      assert.equal(endingFundsContract.toString(), "0");
+      
+      await expect(fundMe.s_funders(0)).to.be.rejected; 
+
+      for(let i = 0 ; i < 3 ; i++){
+        const amount = await fundMe.s_addressToAmountFunded(accounts[i].address);
+        assert.equal(amount.toString(), "0");
+      }
+    });
+
+    it("only owner can withdraw", async () => {
+      //arrange
+      const accounts = await ethers.getSigners();
+      const testAccount = accounts[1];
+      const testAccountConnectedWithFundMe = await fundMe.connect(testAccount) as Contract;
+
+      //assert
+      await expect(testAccountConnectedWithFundMe.withdraw()).to.be.rejectedWith("FundMe__NotOwner");
+    });
+
+    it("can withdraw from multiple funders with cheaper withdraw", async () => {
+      //arrange
+      const accounts = await ethers.getSigners();
+      for(let i = 0 ; i < 3 ; i++){
+        const fundMeConnectedWithAccount = await fundMe.connect(accounts[i]) as Contract;
+        await fundMeConnectedWithAccount.fund({value: sendValue});
+      }
+
+      const startingFunds = await ethers.provider.getBalance(deployer);
+      const startingFundsContract = await ethers.provider.getBalance(fundMe.target);
+
+      //act
+      const transactionResponse = await fundMe.cheaperWithdraw();
+      const transactionReceipt = await transactionResponse.wait(1);
+
+      // 计算实际消耗的 gas cost
+      const gasUsed = transactionReceipt.gasUsed;
+      const gasPrice = transactionReceipt.gasPrice;
+      const gasCost = gasUsed * gasPrice;
+      
+      const endingFunds = await ethers.provider.getBalance(deployer);
+      const endingFundsContract = await ethers.provider.getBalance(fundMe.target);
+
+      //assert
+      assert.equal((endingFunds + BigInt(gasCost)).toString(), (startingFunds + startingFundsContract).toString());
+
+      assert.equal(endingFundsContract.toString(), "0  "); 
     });
   });
 });
